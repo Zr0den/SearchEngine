@@ -25,7 +25,6 @@ public class Database
             await ExecuteAsync(connection, "DROP TABLE IF EXISTS Words");
             await ExecuteAsync(connection, "DROP TABLE IF EXISTS Documents");
         }
-
     }
 
     public async Task RecreateDatabase()

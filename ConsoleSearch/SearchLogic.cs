@@ -17,9 +17,16 @@ namespace ConsoleSearch
 
         public SearchLogic()
         {
-            var response = api.Send(new HttpRequestMessage(HttpMethod.Get, "Word"));
-            var content = response.Content.ReadAsStringAsync().Result;
-            mWords = JsonSerializer.Deserialize<Dictionary<string, int>>(content);
+            try
+            {
+                var response = api.Send(new HttpRequestMessage(HttpMethod.Get, "Word"));
+                var content = response.Content.ReadAsStringAsync().Result;
+                mWords = JsonSerializer.Deserialize<Dictionary<string, int>>(content);
+            }
+            catch (Exception ex) 
+            {
+                throw new ApplicationException($"Error with api call in SearchLogic. {ex.Message}");
+            }
         }
 
         public int GetIdOf(string word)

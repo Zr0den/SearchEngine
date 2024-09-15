@@ -9,26 +9,42 @@ namespace Indexer
     {
         static void Main(string[] args)
         {
-            DecompressGzipFile("enron/mikro.tar.gz", "mails.tar");
-            if(Directory.Exists("maildir")) Directory.Delete("maildir", true);
-            TarFile.ExtractToDirectory("mails.tar", ".", false);
+            try
+            {
+                DecompressGzipFile("enron/mikro.tar.gz", "mails.tar");
+                if (Directory.Exists("maildir")) Directory.Delete("maildir", true);
+                TarFile.ExtractToDirectory("mails.tar", ".", false);
+
+                new Renamer().Crawl(new DirectoryInfo("maildir"));
+                new App().Run();
+            }
+            catch (Exception ex) 
+            {
+                throw new ApplicationException($"Error in Indexer.Program.Main: {ex.Message}");
+            }
             
-            new Renamer().Crawl(new DirectoryInfo("maildir"));
-            new App().Run();
         }
         
         static void DecompressGzipFile(string compressedFilePath, string decompressedFilePath)
         {
-            using (FileStream compressedFileStream = File.OpenRead(compressedFilePath))
+            try
             {
-                using (FileStream decompressedFileStream = File.Create(decompressedFilePath))
+                using (FileStream compressedFileStream = File.OpenRead(compressedFilePath))
                 {
-                    using (GZipStream gzipStream = new GZipStream(compressedFileStream, CompressionMode.Decompress))
+                    using (FileStream decompressedFileStream = File.Create(decompressedFilePath))
                     {
-                        gzipStream.CopyTo(decompressedFileStream);
+                        using (GZipStream gzipStream = new GZipStream(compressedFileStream, CompressionMode.Decompress))
+                        {
+                            gzipStream.CopyTo(decompressedFileStream);
+                        }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                throw new ApplicationException($"Error in DecompressGzipFile: {ex.Message}");
+            }
+
         }
     }
 }

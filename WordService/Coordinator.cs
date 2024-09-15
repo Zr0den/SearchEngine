@@ -68,6 +68,7 @@ public class Coordinator
         connection = new SqlConnection($"Server={serverName};User Id=sa;Password=SuperSecret7!;Encrypt=false;");
         try
         {
+            //attempt at retry implementation
             while (retries > 0 && success == false)
             {
                 connection.OpenAsync();

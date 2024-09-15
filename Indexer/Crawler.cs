@@ -20,13 +20,20 @@ namespace Indexer
         private ISet<string> ExtractWordsInFile(FileInfo f)
         {
             ISet<string> res = new HashSet<string>();
-            var content = File.ReadAllLines(f.FullName);
-            foreach (var line in content)
+            try
             {
-                foreach (var aWord in line.Split(sep, StringSplitOptions.RemoveEmptyEntries))
+                var content = File.ReadAllLines(f.FullName);
+                foreach (var line in content)
                 {
-                    res.Add(aWord);
+                    foreach (var aWord in line.Split(sep, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        res.Add(aWord);
+                    }
                 }
+            }
+            catch (Exception ex) 
+            {
+                throw new ApplicationException($"Error in ExtractWordsInFile. Exception: {ex.Message}");
             }
 
             return res;
@@ -51,37 +58,45 @@ namespace Indexer
         {
             Console.WriteLine("Crawling " + dir.FullName);
 
-            foreach (var file in dir.EnumerateFiles())
+            try
             {
-                if (extensions.Contains(file.Extension))
+
+                foreach (var file in dir.EnumerateFiles())
                 {
-                    documents.Add(file.FullName, documents.Count + 1);
-
-                    var documentMessage = new HttpRequestMessage(HttpMethod.Post, "Document?id=" + documents[file.FullName]  + "&url=" + Uri.EscapeDataString(file.FullName));
-                    api.Send(documentMessage);
-                    //mdatabase.InsertDocument(documents[file.FullName], file.FullName);
-                    
-                    Dictionary<string, int> newWords = new Dictionary<string, int>();
-                    ISet<string> wordsInFile = ExtractWordsInFile(file);
-                    foreach (var aWord in wordsInFile)
+                    if (extensions.Contains(file.Extension))
                     {
-                        if (!words.ContainsKey(aWord))
+                        documents.Add(file.FullName, documents.Count + 1);
+
+                        var documentMessage = new HttpRequestMessage(HttpMethod.Post, "Document?id=" + documents[file.FullName] + "&url=" + Uri.EscapeDataString(file.FullName));
+                        api.Send(documentMessage);
+                        //mdatabase.InsertDocument(documents[file.FullName], file.FullName);
+
+                        Dictionary<string, int> newWords = new Dictionary<string, int>();
+                        ISet<string> wordsInFile = ExtractWordsInFile(file);
+                        foreach (var aWord in wordsInFile)
                         {
-                            words.Add(aWord, words.Count + 1);
-                            newWords.Add(aWord, words[aWord]);
+                            if (!words.ContainsKey(aWord))
+                            {
+                                words.Add(aWord, words.Count + 1);
+                                newWords.Add(aWord, words[aWord]);
+                            }
                         }
+
+                        var wordMessage = new HttpRequestMessage(HttpMethod.Post, "Word");
+                        wordMessage.Content = JsonContent.Create(newWords);
+                        api.Send(wordMessage);
+                        //mdatabase.InsertAllWords(newWords);
+
+                        var occurrenceMessage = new HttpRequestMessage(HttpMethod.Post, "Occurrence?docId=" + documents[file.FullName]);
+                        occurrenceMessage.Content = JsonContent.Create(GetWordIdFromWords(wordsInFile));
+                        api.Send(occurrenceMessage);
+                        //mdatabase.InsertAllOcc(documents[file.FullName], GetWordIdFromWords(wordsInFile));
                     }
-
-                    var wordMessage = new HttpRequestMessage(HttpMethod.Post, "Word");
-                    wordMessage.Content = JsonContent.Create(newWords);
-                    api.Send(wordMessage);
-                    //mdatabase.InsertAllWords(newWords);
-
-                    var occurrenceMessage = new HttpRequestMessage(HttpMethod.Post, "Occurrence?docId=" + documents[file.FullName]);
-                    occurrenceMessage.Content = JsonContent.Create(GetWordIdFromWords(wordsInFile));
-                    api.Send(occurrenceMessage);
-                    //mdatabase.InsertAllOcc(documents[file.FullName], GetWordIdFromWords(wordsInFile));
                 }
+            }
+            catch(Exception ex)
+            {
+                throw new ApplicationException($"Error in IndexFilesIn. dir; {dir}. Exception: {ex.Message}");
             }
 
             foreach (var d in dir.EnumerateDirectories())

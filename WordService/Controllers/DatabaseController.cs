@@ -9,14 +9,14 @@ public class DatabaseController : ControllerBase
     private Database database = Database.GetInstance();
     
     [HttpDelete]
-    public void Delete()
+    public async void Delete()
     {
-        database.DeleteDatabase();
+        await database.DeleteDatabase();
     }
 
     [HttpPost]
-    public void Post()
+    public async void Post()
     {
-        database.RecreateDatabase();
+        await database.RecreateDatabase();
     }
 }

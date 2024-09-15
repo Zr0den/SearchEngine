@@ -10,7 +10,7 @@ public class WordController : ControllerBase
     private Database database = Database.GetInstance();
 
     [HttpGet]
-    public Dictionary<string, int> Get()
+    public Task<Dictionary<string, int>> Get()
     {
         return database.GetAllWords();
     }

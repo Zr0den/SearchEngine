@@ -22,7 +22,7 @@ public class Coordinator
     {
         return GetConnectionByServerName(OCCURRENCE_DB);
     }
-    
+
     public DbConnection GetWordConnection(string word)
     {
         switch (word.Length)
@@ -47,7 +47,7 @@ public class Coordinator
             yield return wordConnection;
         }
     }
-    
+
     public IEnumerable<DbConnection> GetAllWordConnections()
     {
         yield return GetConnectionByServerName(SHORT_WORD_DB);
@@ -55,16 +55,38 @@ public class Coordinator
         yield return GetConnectionByServerName(LONG_WORD_DB);
     }
 
-    private DbConnection GetConnectionByServerName(string serverName)
+    private DbConnection GetConnectionByServerName(string serverName, int retryCount = 3)
     {
         if (ConnectionCache.TryGetValue(serverName, out var connection))
         {
             return connection;
         }
-        
+
+        int retries = retryCount;
+        bool success = false;
+
         connection = new SqlConnection($"Server={serverName};User Id=sa;Password=SuperSecret7!;Encrypt=false;");
-        connection.Open();
-        ConnectionCache.Add(serverName, connection);
+        try
+        {
+            while (retries > 0 && success == false)
+            {
+                connection.OpenAsync();
+                ConnectionCache.Add(serverName, connection);
+                if (connection.State == ConnectionState.Open)
+                {
+                    success = true;
+                }
+                else
+                {
+                    retries--;
+                    Thread.Sleep(2000);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new ApplicationException($"Error at 'GetConnectionByServerName'. serverName; {serverName}. Exception: {ex.Message}");
+        }
         return connection;
     }
 }

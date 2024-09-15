@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace ConsoleSearch
 {
@@ -19,7 +20,6 @@ namespace ConsoleSearch
             var response = api.Send(new HttpRequestMessage(HttpMethod.Get, "Word"));
             var content = response.Content.ReadAsStringAsync().Result;
             mWords = JsonSerializer.Deserialize<Dictionary<string, int>>(content);
-            //mWords = mDatabase.GetAllWords();
         }
 
         public int GetIdOf(string word)
@@ -36,7 +36,6 @@ namespace ConsoleSearch
             var content = response.Content.ReadAsStringAsync().Result;
             Console.WriteLine(content);
             return JsonSerializer.Deserialize<Dictionary<int, int>>(content);
-           //return mDatabase.GetDocuments(wordIds);
         }
 
         public List<string> GetDocumentDetails(List<int> docIds)
@@ -45,7 +44,6 @@ namespace ConsoleSearch
             var response = api.Send(new HttpRequestMessage(HttpMethod.Get, url));
             var content = response.Content.ReadAsStringAsync().Result;
             return JsonSerializer.Deserialize<List<string>>(content);
-            //return mDatabase.GetDocDetails(docIds);
         }
     }
 }

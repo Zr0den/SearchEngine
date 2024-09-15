@@ -9,7 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
-*full.tar.gz
+full.tar.*
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
